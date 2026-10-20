@@ -1,0 +1,183 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PeerDrop</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+:root{--bg:#f2f2f7;--card:#fff;--tx:#000;--sub:#8e8e93;--sep:#c6c6c8;--blue:#007aff;--green:#34c759;--red:#ff3b30;--fill:#7676801f;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#000;--card:#1c1c1e;--tx:#fff;--sep:#38383a;--blue:#0a84ff;--green:#30d158;--red:#ff453a;--fill:#7676803d;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#000;--card:#1c1c1e;--tx:#fff;--sep:#38383a;--blue:#0a84ff;--green:#30d158;--red:#ff453a;--fill:#7676803d;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{max-width:640px;margin:0 auto;padding:12px 16px 120px}
+h1{font-size:34px;font-weight:700;margin:8px 0 10px;letter-spacing:-.5px}
+h3{margin:0 0 8px;font-size:13px;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:16px}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;font-size:17px;font-weight:600;background:var(--blue);color:#fff;cursor:pointer;margin-top:10px}
+.btn.g{background:var(--fill);color:var(--blue)}.btn:disabled{opacity:.4}
+.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;margin-bottom:16px}
+.seg button{flex:1;border:0;background:none;padding:7px;border-radius:7px;font-size:14px;font-weight:600;color:var(--tx);cursor:pointer}
+.seg button.on{background:var(--card);box-shadow:0 1px 3px #0003}
+input,textarea{width:100%;border:0;background:var(--fill);color:var(--tx);border-radius:10px;padding:12px;font:inherit;outline:0}
+textarea{height:70px;font:12px ui-monospace,Menlo,monospace;resize:none}
+.code{font:700 34px ui-monospace,Menlo,monospace;letter-spacing:3px;text-align:center;margin:6px 0}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:99px;background:var(--card);font-size:14px;margin-bottom:16px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--sub)}.dot.g{background:var(--green)}.dot.r{background:var(--red)}.dot.b{background:var(--blue)}
+.sub{color:var(--sub);font-size:13px}.c{text-align:center}
+.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:.5px solid var(--sep)}.row:first-child{border-top:0}
+.ic{width:40px;height:40px;border-radius:10px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.ic.in{background:var(--green)}.grow{flex:1;min-width:0}.nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.bar{height:4px;border-radius:2px;background:var(--fill);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--blue)}
+a.dl,button.sh{color:var(--blue);font-weight:600;font-size:15px;text-decoration:none;background:none;border:0;cursor:pointer;padding:6px}
+.drop{border:2px dashed var(--sep);border-radius:14px;padding:26px;text-align:center;cursor:pointer}.drop.hot{border-color:var(--blue)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:.5px solid var(--sep);padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+nav button{flex:1;border:0;background:none;color:var(--sub);font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+nav button.on{color:var(--blue)}nav svg{width:26px;height:26px}
+#toast{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 16px;border-radius:99px;font-size:14px;z-index:9;display:none;max-width:90%}
+[hidden]{display:none!important}.qr svg{width:170px;height:170px;background:#fff;padding:8px;border-radius:12px}
+</style></head><body>
+<div id="toast"></div>
+<main>
+<h1 id="ttl">Connect</h1>
+<div class="pill"><span class="dot" id="dot"></span><span id="pill">Not connected</span></div>
+
+<section id="t0">
+<div class="seg"><button id="sa" class="on">Room Code</button><button id="sm">Manual</button></div>
+<div id="auto">
+ <div class="card c" id="hostBox" hidden>
+  <h3>Your room code</h3><div class="code" id="code"></div>
+  <div class="qr" id="qr"></div>
+  <div class="sub">Dusre device par <b>Join</b> me ye code daalein ya QR scan karein.</div>
+  <div class="sub" id="relay" style="margin-top:8px"></div>
+  <button class="btn g" id="copy">Copy Code</button>
+ </div>
+ <div class="card"><button class="btn" id="create" style="margin-top:0">Create Room</button>
+  <div class="sub c" style="margin:12px 0">ya</div>
+  <input id="jin" placeholder="Enter code  XXXX-XXXX" maxlength="9" autocapitalize="characters" autocomplete="off">
+  <button class="btn g" id="join">Join Room</button></div>
+</div>
+<div id="man" hidden>
+ <div class="card"><h3>Device A · Step 1</h3><button class="btn" id="mOffer" style="margin-top:0">Generate Offer</button>
+  <textarea id="mo" readonly placeholder="Offer yahan aayega — Device B ko bhejein"></textarea><button class="btn g" data-cp="mo">Copy</button></div>
+ <div class="card"><h3>Device B · Step 2</h3><textarea id="mi" placeholder="Device A ka Offer paste karein"></textarea>
+  <button class="btn" id="mAns">Create Answer</button><textarea id="mo2" readonly placeholder="Answer yahan aayega — Device A ko bhejein" style="margin-top:10px"></textarea><button class="btn g" data-cp="mo2">Copy</button></div>
+ <div class="card"><h3>Device A · Step 3</h3><textarea id="ma" placeholder="Device B ka Answer paste karein"></textarea><button class="btn" id="mApply">Connect</button></div>
+</div>
+</section>
+
+<section id="t1" hidden>
+ <div class="card"><label class="drop" id="drop" style="display:block"><input type="file" id="pick" multiple hidden>
+  <div style="font-size:17px;font-weight:600;color:var(--blue)">Choose Files</div><div class="sub">ya yahan drag &amp; drop karein</div></label></div>
+ <div class="card" id="listCard"><h3>Transfers</h3><div id="list"><div class="sub c">Abhi koi file nahi</div></div></div>
+</section>
+
+<section id="t2" hidden>
+ <div class="card"><h3>Optional TURN server</h3>
+  <div class="sub" style="margin-bottom:8px">Alag network / mobile data par connect na ho to TURN daalein.</div>
+  <input id="turn" placeholder="turn:host:3478" style="margin-bottom:8px"><input id="tu" placeholder="Username" style="margin-bottom:8px"><input id="tc" type="password" placeholder="Credential"></div>
+ <div class="card"><h3>About</h3><div class="sub">Files seedhe device se device jaati hain (WebRTC, DTLS encrypted). Koi cloud storage nahi. Receive hone par file size check hota hai. Badi files browser memory me aati hain, isliye ~1 GB tak rakhein.</div></div>
+</section>
+</main>
+<nav>
+ <button class="on" data-t="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Connect</button>
+ <button data-t="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Files</button>
+ <button data-t="2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>Settings</button>
+</nav>
+<script>
+const $=s=>document.querySelector(s),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>{if(n<1024)return n+' B';const u=['KB','MB','GB'];let i=-1;do{n/=1024;i++}while(n>=1024&&i<2);return n.toFixed(n<10?2:1)+' '+u[i]};
+const AL='23456789ABCDEFGHJKLMNPQRSTUVWXYZ',me=Math.random().toString(36).slice(2,10);
+const BR=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt'];
+let cfg={};try{cfg=JSON.parse(localStorage.getItem('pdcfg')||'{}')}catch{}
+let pc=null,dc=null,sig=null,helloT=null,hostOffer=null,building=false,ans=null,gb=false,connected=false,files=[],rx=null,queue=Promise.resolve(),lock=null;
+
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',3800)}
+function stat(t,k){$('#pill').textContent=t;$('#dot').className='dot '+(k||'')}
+function tab(n){['t0','t1','t2'].forEach((id,i)=>$('#'+id).hidden=i!=n);document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==n));$('#ttl').textContent=['Connect','Files','Settings'][n]}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+$('#sa').onclick=()=>{$('#auto').hidden=false;$('#man').hidden=true;$('#sa').className='on';$('#sm').className=''};
+$('#sm').onclick=()=>{$('#auto').hidden=true;$('#man').hidden=false;$('#sm').className='on';$('#sa').className=''};
+document.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>copy($('#'+b.dataset.cp).value));
+async function copy(t){if(!t)return;try{await navigator.clipboard.writeText(t)}catch{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}toast('Copied')}
+$('#copy').onclick=()=>copy($('#code').textContent);
+for(const [k,id] of [['turn','turn'],['user','tu'],['cred','tc']]){const e=$('#'+id);e.value=cfg[k]||'';e.oninput=()=>{cfg[k]=e.value.trim();try{localStorage.setItem('pdcfg',JSON.stringify(cfg))}catch{}}}
+
+/* ---- MQTT-over-WSS signaling (public brokers, no server needed) ---- */
+const enc=s=>{const u=new TextEncoder().encode(s);return[u.length>>8,u.length&255,...u]};
+const rl=n=>{const o=[];do{let b=n%128;n=Math.floor(n/128);if(n)b|=128;o.push(b)}while(n);return o};
+const pConn=id=>{const v=[...enc('MQTT'),4,2,0,60,...enc(id)];return new Uint8Array([0x10,...rl(v.length),...v])};
+const pSub=t=>{const v=[0,1,...enc(t),0];return new Uint8Array([0x82,...rl(v.length),...v])};
+const pPub=(t,p)=>{const v=[...enc(t),...new TextEncoder().encode(p)];return new Uint8Array([0x30,...rl(v.length),...v])};
+function parse(b,cb){let i=0;while(i<b.length){const t=b[i]>>4,fl=b[i]&15;let j=i+1,m=1,L=0,x;do{x=b[j++];L+=(x&127)*m;m*=128}while(x&128);const end=j+L;if(t===2)cb('ack');else if(t===3){const tl=(b[j]<<8)|b[j+1];let k=j+2+tl;if((fl>>1)&3)k+=2;cb('pub',new TextDecoder().decode(b.subarray(k,end)))}i=end}}
+function openSig(code,onMsg,onN){
+ const topic='peerdrop/v3/'+code,socks=[],seen=new Set();let n=0;
+ BR.forEach(u=>{try{const ws=new WebSocket(u,'mqtt');ws.binaryType='arraybuffer';socks.push(ws);
+  ws.onopen=()=>ws.send(pConn('pd'+me+Math.random().toString(36).slice(2,5)));
+  ws.onmessage=e=>parse(new Uint8Array(e.data),(k,d)=>{if(k==='ack'){n++;onN(n);ws.send(pSub(topic))}else{try{const m=JSON.parse(d);if(m.f===me||seen.has(m.n))return;seen.add(m.n);onMsg(m)}catch{}}});
+  ws.onclose=()=>{n=Math.max(0,n-1);onN(n)};ws.onerror=()=>{}}catch{}});
+ const ping=setInterval(()=>socks.forEach(w=>w.readyState===1&&w.send(new Uint8Array([0xc0,0]))),25000);
+ return{send(m){const p=pPub(topic,JSON.stringify({...m,f:me,n:Math.random().toString(36).slice(2)}));socks.forEach(w=>w.readyState===1&&w.send(p))},close(){clearInterval(ping);socks.forEach(w=>{try{w.close()}catch{}})}}}
+function relayUI(n){$('#relay').textContent='Signaling servers: '+n+'/'+BR.length}
+function watchRelay(){setTimeout(()=>{if(sig&&!connected&&/0\//.test($('#relay').textContent))toast('Signaling server block hai. "Manual" mode use karein ya file ko apne HTTPS host par kholein.')},7000)}
+
+/* ---- WebRTC ---- */
+const iceCfg=()=>{const s=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478']}];if(cfg.turn)s.push({urls:cfg.turn.split(',').map(x=>x.trim()),username:cfg.user||'',credential:cfg.cred||''});return{iceServers:s}};
+function mk(){try{pc&&pc.close()}catch{}pc=new RTCPeerConnection(iceCfg());
+ pc.onconnectionstatechange=()=>{if(pc.connectionState==='failed')stat('Connection fail — TURN add karein ya dobara try karein','r')};
+ pc.ondatachannel=e=>setDc(e.channel);return pc}
+const gather=p=>new Promise(r=>{if(p.iceGatheringState==='complete')return r();const t=setTimeout(r,4000);p.addEventListener('icegatheringstatechange',()=>{if(p.iceGatheringState==='complete'){clearTimeout(t);r()}})});
+async function makeOffer(){mk();setDc(pc.createDataChannel('f'));await pc.setLocalDescription(await pc.createOffer());await gather(pc);return pc.localDescription.toJSON()}
+async function makeAnswer(o){mk();await pc.setRemoteDescription(o);await pc.setLocalDescription(await pc.createAnswer());await gather(pc);return pc.localDescription.toJSON()}
+function setDc(d){dc=d;d.binaryType='arraybuffer';
+ const up=()=>{connected=true;clearInterval(helloT);sig&&sig.close();sig=null;stat('Connected — ab files bhej sakte hain','g');toast('Connected ✓');tab(1)};
+ d.onopen=up;if(d.readyState==='open')up();
+ d.onclose=()=>{connected=false;stat('Disconnected','r')};d.onmessage=onData}
+function closeAll(){clearInterval(helloT);sig&&sig.close();sig=null;try{pc&&pc.close()}catch{}pc=dc=null;connected=false;hostOffer=ans=null;building=gb=false;stat('Not connected')}
+
+function code8(){const b=crypto.getRandomValues(new Uint8Array(8));let s='';for(const x of b)s+=AL[x&31];return s.slice(0,4)+'-'+s.slice(4)}
+function norm(r){const c=r.toUpperCase().replace(/[^23456789ABCDEFGHJKLMNPQRSTUVWXYZ]/g,'');return c.length===8?c.slice(0,4)+'-'+c.slice(4):''}
+$('#create').onclick=()=>{closeAll();const room=code8();$('#code').textContent=room;$('#hostBox').hidden=false;
+ try{const q=qrcode(0,'M');q.addData(location.href.split('#')[0]+'#'+room);q.make();$('#qr').innerHTML=q.createSvgTag(4)}catch{$('#qr').innerHTML=''}
+ relayUI(0);stat('Dusre device ka wait…','b');watchRelay();
+ sig=openSig(room,async m=>{
+  if(m.t==='hello'&&!connected){if(!hostOffer&&!building){building=true;try{hostOffer=await makeOffer()}catch{}building=false}if(hostOffer&&sig)sig.send({t:'offer',s:hostOffer,to:m.f})}
+  else if(m.t==='answer'&&m.to===me&&pc&&!pc.remoteDescription){stat('Connecting…','b');try{await pc.setRemoteDescription(m.s)}catch{}}},relayUI)};
+function join(raw){const room=norm(raw);if(!room)return toast('Code galat hai (XXXX-XXXX)');closeAll();relayUI(0);stat('Room dhoondh rahe hain…','b');watchRelay();let tries=0;
+ sig=openSig(room,async m=>{if(m.t==='offer'&&m.to===me){if(!ans&&!gb){gb=true;try{ans=await makeAnswer(m.s);stat('Connecting…','b')}catch{toast('Offer invalid')}gb=false}if(ans&&sig)sig.send({t:'answer',s:ans,to:m.f})}},relayUI);
+ helloT=setInterval(()=>{if(connected)return;if(++tries>40){clearInterval(helloT);stat('Room nahi mila / timeout','r');return}sig&&sig.send({t:'hello'})},1500)}
+$('#join').onclick=()=>join($('#jin').value);
+$('#jin').oninput=e=>e.target.value=e.target.value.toUpperCase();
+if(/^#[2-9A-Z]{4}-[2-9A-Z]{4}$/i.test(location.hash)){$('#jin').value=location.hash.slice(1).toUpperCase();setTimeout(()=>join($('#jin').value),400)}
+
+/* manual (serverless) */
+$('#mOffer').onclick=async()=>{closeAll();stat('Offer ban raha hai…','b');$('#mo').value=btoa(JSON.stringify(await makeOffer()));stat('Offer ready — Device B ko bhejein','b')};
+$('#mAns').onclick=async()=>{try{const o=JSON.parse(atob($('#mi').value.trim()));closeAll();$('#mo2').value=btoa(JSON.stringify(await makeAnswer(o)));stat('Answer ready — Device A ko bhejein','b')}catch{toast('Offer galat hai')}};
+$('#mApply').onclick=async()=>{try{await pc.setRemoteDescription(JSON.parse(atob($('#ma').value.trim())));stat('Connecting…','b')}catch{toast('Answer galat hai ya pehle Offer banayein')}};
+
+/* ---- file transfer ---- */
+const safe=n=>(String(n).replace(/[\\/:*?"<>|\u0000-\u001f]/g,'_').replace(/^\.+/,'').slice(0,150))||'file';
+let rq=0;const render=()=>{if(rq)return;rq=requestAnimationFrame(()=>{rq=0;
+ $('#list').innerHTML=files.length?files.map((f,i)=>{const p=f.size?Math.floor(f.bytes/f.size*100):100;
+ return `<div class="row"><div class="ic ${f.dir}">${f.dir==='in'?'↓':'↑'}</div><div class="grow"><div class="nm">${esc(f.name)}</div><div class="sub">${fmt(f.size)} · ${f.state==='done'?(f.dir==='in'?'Received ✓':'Sent ✓'):f.state==='failed'?'Failed':p+'%'}</div>${f.state==='sending'||f.state==='receiving'?`<div class="bar"><i style="width:${p}%"></i></div>`:''}</div>${f.url?`<a class="dl" href="${f.url}" download="${esc(f.name)}">Save</a>${navigator.canShare?`<button class="sh" data-i="${i}">Share</button>`:''}`:''}</div>`}).join(''):'<div class="sub c">Abhi koi file nahi</div>'})};
+$('#list').onclick=async e=>{const b=e.target.closest('.sh');if(!b)return;const f=files[b.dataset.i];try{const file=new File([f.blob],f.name,{type:f.blob.type});if(navigator.canShare({files:[file]}))await navigator.share({files:[file]})}catch{}};
+async function sendFile(file){const it={name:safe(file.name),size:file.size,dir:'out',bytes:0,state:'sending'};files.unshift(it);render();
+ try{lock=await navigator.wakeLock?.request('screen')}catch{}
+ try{dc.send(JSON.stringify({t:'meta',name:it.name,size:file.size,type:file.type}));
+  const BLK=1<<20,CH=16384;let off=0;
+  while(off<file.size){const buf=new Uint8Array(await file.slice(off,off+BLK).arrayBuffer());
+   for(let p=0;p<buf.length;p+=CH){while(dc.bufferedAmount>4194304){if(dc.readyState!=='open')throw 0;await sleep(15)}
+    if(dc.readyState!=='open')throw 0;dc.send(buf.subarray(p,p+CH));it.bytes=Math.min(off+p+CH,file.size);render()}
+   off+=buf.length}
+  while(dc.bufferedAmount>0&&dc.readyState==='open')await sleep(20);
+  dc.send(JSON.stringify({t:'end'}));it.bytes=file.size;it.state='done'}catch{it.state='failed'}
+ try{lock&&lock.release()}catch{}render()}
+function enqueue(list){if(!connected||!dc||dc.readyState!=='open'){toast('Pehle device connect karein');tab(0);return}
+ for(const f of list)queue=queue.then(()=>sendFile(f))}
+function onData(e){if(typeof e.data==='string'){let m;try{m=JSON.parse(e.data)}catch{return}
+  if(m.t==='meta'){const it={name:safe(m.name),size:+m.size||0,dir:'in',bytes:0,state:'receiving'};rx={it,parts:[],type:m.type||'application/octet-stream'};files.unshift(it);tab(1)}
+  else if(m.t==='end'&&rx){if(rx.it.bytes===rx.it.size){rx.it.blob=new Blob(rx.parts,{type:rx.type});rx.it.url=URL.createObjectURL(rx.it.blob);rx.it.state='done';toast('Received: '+rx.it.name)}else rx.it.state='failed';rx=null}
+  render()}else if(rx){rx.parts.push(e.data);rx.it.bytes+=e.data.byteLength;render()}}
+$('#pick').onchange=e=>{enqueue([...e.target.files]);e.target.value=''};
+const dr=$('#drop');dr.ondragover=e=>{e.preventDefault();dr.classList.add('hot')};dr.ondragleave=()=>dr.classList.remove('hot');
+dr.ondrop=e=>{e.preventDefault();dr.classList.remove('hot');enqueue([...e.dataTransfer.files])};
+</script></body></html>
